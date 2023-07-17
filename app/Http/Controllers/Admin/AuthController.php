@@ -3,82 +3,42 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use Illuminate\Http\Request;
-
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
     public function Login(Request $request)
     {
-        if(Auth::check()){
-            return redirect()->route('dashboard');
+
+        if (!Auth::guard('admin')->check()) {
+            return view('admin.auth.login');
+        }else{
+            return redirect('/admin/dashboard');
         }
-        return view('admin.auth.login');
+
     }
 
-    public function LoginSubmit(Request $request){
-       
+    public function LoginSubmit(Request $request)
+    {
         $credentials = $request->validate([
             'email' => 'required',
             'password' => 'required|min:6|max:12',
         ]); 
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
+        if (Auth::guard('admin')->attempt($credentials)) {
+            return redirect()->intended('/admin/dashboard');
         }
 
-        return back()->with('error', 'Incorrect User Email or Password');
+         // Invalid credentials
+         return back()->with('error', 'Invalid login credentials');
     }
-
-    public function Register(Request $request)
+    public function Logout()
     {
-        if(Auth::check()){
-            return redirect()->route('dashboard');
-        }
-        return view('admin.auth.register');
+        Auth::guard('admin')->logout();
+        return redirect('/admin/login');
     }
-
-    public function RegisterSubmit(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|regex:/^[a-zA-Z\s]+$/',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6|max:12',
-        ]); 
-
-        $user = User::where('email', $request->email)->first();
-        if($user){
-            return back()->with('error', 'Email already in use');
-        }
-        
-        $user = User::create([
-            'username' => $request->username,
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            // 'role' => 0,
-        ]);
-
-        Auth::login($user); // Login User  
-
-        return redirect()->route('login')->with('success', 'User Registered Successfully');
-    }
-
-    public function logout(Request $request)
-    {
-        Auth::logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('login');
-    }
-
-
-   
 }

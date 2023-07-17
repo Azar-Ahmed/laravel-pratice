@@ -4,9 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
-class AuthMiddleware
+class UserAuth
 {
     /**
      * Handle an incoming request.
@@ -17,12 +16,6 @@ class AuthMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check()) {
-            // User is authenticated, allow the request to proceed
-            return $next($request);
-        }
-
-        // User is not authenticated, redirect them to the login page
-        return redirect('/login');
+        return $next($request);
     }
 }
